@@ -1,0 +1,28 @@
+{
+  "name": "mcmap-tool",
+  "version": "1.0.0",
+  "description": "A (hopefully) useful utility that converts images to map arts for Minecraft",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gingerchicken/MCMap-Tool.git"
+  },
+  "keywords": [
+    "minecraft",
+    "map",
+    "image-converter"
+  ],
+  "author": "gingerchicken",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gingerchicken/MCMap-Tool/issues"
+  },
+  "homepage": "https://github.com/gingerchicken/MCMap-Tool#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mocha": "^8.3.0"
+  }
+}
