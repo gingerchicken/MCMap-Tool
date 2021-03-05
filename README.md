@@ -1,2 +1,2 @@
-# MCMap-Tool
-A (hopefully) useful utility that converts images to map arts for Minecraft
+# Minecraft Map Art Generator Utility
+A (hopefully) useful utility that converts images to map arts for Minecraft, while this is not entirely new thing, I wanted to try and better the current solutions to the problem.  However, I must give a big thanks to the developer(s) of [mc-map-item-tool](https://github.com/djfun/mc-map-item-tool) as that allowed me to view their implementation so I could better my own <3
