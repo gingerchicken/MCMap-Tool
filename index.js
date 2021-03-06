@@ -34,6 +34,10 @@ let listener = app.listen(MCMapSettings.listenPort, () => {
     console.log(`MCMap-Tool is now listening on port ${MCMapSettings.listenPort}.`);
 });
 
+// Example Code
+let example = new MCImage('./test/data/funny_image.jpg', MC_COLOUR_SETS['1.12'], '1.12');
+example.saveNbtData('./funny_map.dat');
+
 module.exports = {
     listener: listener,
     app: app

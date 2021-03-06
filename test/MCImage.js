@@ -1,6 +1,14 @@
 const chai = require('chai');
 const assert = require('assert');
 const {MCImage, Colour} = require('../MCImage');
+const fs = require('fs');
+const crypto = require('crypto');
+
+function createMd5(data) {
+    return crypto.createHash('md5').update(data).digest('hex');
+}
+
+const TEST_IMAGE_PATH = './test/data/funny_image.jpg';
 
 describe('MCImage.js', () => {
     let EXAMPLE_COLOUR_SET;
@@ -106,7 +114,7 @@ describe('MCImage.js', () => {
     describe('MCImage', () => {
         let mcimg;
         beforeEach(() => {
-            mcimg = new MCImage('./test/data/funny_image.png', EXAMPLE_COLOUR_SET);
+            mcimg = new MCImage(TEST_IMAGE_PATH, EXAMPLE_COLOUR_SET);
         });
 
         function coloursEqual(c1, c2) {
@@ -131,13 +139,31 @@ describe('MCImage.js', () => {
 
         describe('#normaliseColour()', () => {
             it('returns closest in the set', () => {
-                coloursEqual(mcimg.normaliseColour(new Colour(0, 0, 0)),        Colour.fromArray(EXAMPLE_COLOUR_SET[0]));
-                coloursEqual(mcimg.normaliseColour(new Colour(1, 1, 1)),        Colour.fromArray(EXAMPLE_COLOUR_SET[0]));
+                assert.deepStrictEqual(mcimg.normaliseColour(new Colour(0, 0, 0)),
+                {
+                    colour: Colour.fromArray(EXAMPLE_COLOUR_SET[0]),
+                    id: 0
+                });
 
-                coloursEqual(mcimg.normaliseColour(new Colour(100, 100, 100)),  Colour.fromArray(EXAMPLE_COLOUR_SET[1]));
+                assert.deepStrictEqual(mcimg.normaliseColour(new Colour(100, 100, 100)),
+                {
+                    colour: Colour.fromArray(EXAMPLE_COLOUR_SET[1]),
+                    id: 1
+                });
 
-                coloursEqual(mcimg.normaliseColour(new Colour(253, 0, 232)),    Colour.fromArray(EXAMPLE_COLOUR_SET[2]));
-                coloursEqual(mcimg.normaliseColour(new Colour(250, 244, 232)),  Colour.fromArray(EXAMPLE_COLOUR_SET[2]));
+                assert.deepStrictEqual(mcimg.normaliseColour(new Colour(253, 0, 232)),
+                {
+                    colour: Colour.fromArray(EXAMPLE_COLOUR_SET[2]),
+                    id: 2
+                });
+
+                // Real world examples
+                mcimg = new MCImage(TEST_IMAGE_PATH, JSON.parse(fs.readFileSync('./shared/colour_sets.json'))['1.12']);
+                assert.notDeepStrictEqual(mcimg.normaliseColour(Colour.fromArray([219,221,217,255])),
+                {
+                    colour: undefined,
+                    id: -1
+                });
             });
         });
 
@@ -145,7 +171,36 @@ describe('MCImage.js', () => {
             it('doesn\'t reject', async () => {
                 await assert.doesNotReject(mcimg.readyImage());
             }).timeout(0);
-            it('shrinks image');
+            it('shrinks image to fit');
+        });
+
+        describe('#saveNbtData()', () => {
+            const TEMP_MAP_PATH = './test_map.dat';
+
+            let sets;
+            before(() => {
+                sets = JSON.parse(fs.readFileSync('./shared/colour_sets.json'));
+            });
+            beforeEach(() => {
+                // mcimg.colourSet = sets['1.12'];
+                mcimg = new MCImage(TEST_IMAGE_PATH, sets['1.12'], '1.12');
+            })
+
+            it('saves expected data', async () => {
+                await mcimg.saveNbtData(TEMP_MAP_PATH);
+
+                let actual      = fs.readFileSync(TEMP_MAP_PATH);
+                let expected    = fs.readFileSync('./test/data/expected_map.dat');
+
+                assert.deepStrictEqual(createMd5(actual), createMd5(expected), 'Not equal fingerprints');
+            });
+
+            it('doesn\'t reject', async () => {
+                await assert.doesNotReject(mcimg.saveNbtData(TEMP_MAP_PATH));
+            });
+
+            it('calls #nbtData()');
+            it('compresses file');
         })
     });
 });

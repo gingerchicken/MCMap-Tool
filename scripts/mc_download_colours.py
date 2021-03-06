@@ -66,9 +66,9 @@ class MCColoursVersion:
             tds = tr.getchildren()
             colour_text = tds[TD_INDEX_RGB].text.strip().lower()
             
-            # Make sure it ain't a dupe
-            if colour_text in included_colours:
-                continue
+            # # Make sure it ain't a dupe
+            # if colour_text in included_colours:
+            #     continue
 
             # Mark it as seen
             included_colours[colour_text] = True
