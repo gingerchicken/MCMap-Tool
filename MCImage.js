@@ -1,5 +1,7 @@
 // This will be responsible for converting the images into a form that can be read by Minecraft Maps
-const fs = require('fs');
+const fs        = require('fs');
+const pixels    = require('image-pixels');
+const sharp     = require('sharp');
 
 class Colour {
     // TODO Maybe make a clamp function for each of these setters...
@@ -33,11 +35,19 @@ class Colour {
 
         return new Colour(obj[0], obj[1], obj[2], obj[3]);
     }
+
+    toByte() {
+        // TODO convert it to the weird minecraft way of doing things but idk
+        return this;
+    }
 }
 
 class MCImage {
     #imagePath;
     colourSet;
+
+    static MC_IMG_WIDTH  = 128;
+    static MC_IMG_HEIGHT = 128;
 
     get imagePath() {
         return this.#imagePath;
@@ -61,9 +71,27 @@ class MCImage {
         }
     }
 
-    readyImage() {
-        // TODO Add this and load all of the pixels into memory and normalise them.
-        // Maybe use something like sharp but I am not too sure just yet
+    async readyImage() {
+        // Use sharp to shrink the image to a minecraft size and convert any other formats to PNG
+        let imgBuffer = await sharp('./test/data/funny_image.jpg')
+            .resize(MCImage.MC_IMG_WIDTH, MCImage.MC_IMG_HEIGHT)
+            .png()
+            .toBuffer();
+        
+        // MC-ify the colours with in the image
+        let {data, width, height} = await pixels(imgBuffer);
+
+        let newColours = [];
+        // Get the colours and normalise
+        console.log(data);
+        for (let i = 0; i < data.length; i += 4) {
+            let dataSnip = Array.from(data.subarray(i, i + 4));
+            let c = Colour.fromArray(dataSnip);
+
+            newColours.push(this.normaliseColour(c));
+        }
+
+        // TODO convert to NBT etc.
     }
 
     get nbtData() {

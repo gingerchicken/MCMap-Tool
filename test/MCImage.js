@@ -140,5 +140,12 @@ describe('MCImage.js', () => {
                 coloursEqual(mcimg.normaliseColour(new Colour(250, 244, 232)),  Colour.fromArray(EXAMPLE_COLOUR_SET[2]));
             });
         });
+
+        describe('#readyImage()', () => {
+            it('doesn\'t reject', async () => {
+                await assert.doesNotReject(mcimg.readyImage());
+            }).timeout(0);
+            it('shrinks image');
+        })
     });
 });

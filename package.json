@@ -22,7 +22,9 @@
   },
   "homepage": "https://github.com/gingerchicken/MCMap-Tool#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "image-pixels": "^2.2.2",
+    "sharp": "^0.27.2"
   },
   "devDependencies": {
     "chai": "^4.3.3",
