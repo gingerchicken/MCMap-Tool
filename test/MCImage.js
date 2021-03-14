@@ -1,6 +1,9 @@
-const chai = require('chai');
-const assert = require('assert');
-const {MCImage, Colour} = require('../MCImage');
+const chai      = require('chai');
+const assert    = require('assert');
+const sinon     = require('sinon');
+
+const {MCImage, Colour, MCMap} = require('../MCImage');
+
 const fs = require('fs');
 const crypto = require('crypto');
 
@@ -117,6 +120,10 @@ describe('MCImage.js', () => {
             mcimg = new MCImage(TEST_IMAGE_PATH, EXAMPLE_COLOUR_SET);
         });
 
+        function loadRealSet() {
+            mcimg = new MCImage(TEST_IMAGE_PATH, JSON.parse(fs.readFileSync('./shared/colour_sets.json'))['1.12'], '1.12');
+        }
+
         function coloursEqual(c1, c2) {
             chai.expect(c1.r).to.equal(c2.r, 'Invalid r');
             chai.expect(c1.g).to.equal(c2.g, 'Invalid g');
@@ -135,6 +142,8 @@ describe('MCImage.js', () => {
                     coloursEqual(c1, c2);
                 }
             });
+
+            it('sets correct and expected values');
         });
 
         describe('#normaliseColour()', () => {
@@ -158,7 +167,7 @@ describe('MCImage.js', () => {
                 });
 
                 // Real world examples
-                mcimg = new MCImage(TEST_IMAGE_PATH, JSON.parse(fs.readFileSync('./shared/colour_sets.json'))['1.12']);
+                loadRealSet();
                 assert.notDeepStrictEqual(mcimg.normaliseColour(Colour.fromArray([219,221,217,255])),
                 {
                     colour: undefined,
@@ -168,26 +177,72 @@ describe('MCImage.js', () => {
         });
 
         describe('#readyImage()', () => {
+            beforeEach(() => {
+                loadRealSet();
+            })
+
             it('doesn\'t reject', async () => {
                 await assert.doesNotReject(mcimg.readyImage());
             }).timeout(0);
             it('shrinks image to fit');
+
+            it('returns an array containing maps', async () => {
+                let maps = await mcimg.readyImage();
+
+                for (let map of maps) {
+                    chai.expect(map instanceof MCMap).to.be.true;
+                }
+            })
+
+            it('returns an array containing multiple maps when required', async () => {
+                mcimg.totalMapsWidth  = 2;
+                mcimg.totalMapsHeight = 3;
+
+                let maps = await mcimg.readyImage();
+                chai.expect(maps.length).be.greaterThan(0);
+                chai.expect(maps.length).to.equal(mcimg.totalMapsHeight*mcimg.totalMapsWidth);
+
+                for (let map of maps) {
+                    chai.expect(map instanceof MCMap).to.be.true;
+                }
+            }).timeout(0);
+
+            it('all maps contain valid colours and amounts', async () => {
+                mcimg.totalMapsWidth  = 1;
+                mcimg.totalMapsHeight = 2;
+
+                let maps = await mcimg.readyImage();
+    
+                for (let map of maps) {
+                    chai.expect(map.colourIds.length).to.equal(map.height*map.width);
+
+                    for (let i of map.colourIds) {
+                        chai.expect(parseInt(i)).to.be.lessThan(mcimg.colourSet.length);
+                        chai.expect(mcimg.forbiddenIds[i]).to.not.be.true;
+                    }
+                }
+            }).timeout(0);
+
+            // This was manually tested but maybe just put a hash check or something.
+            it('generates expected mutliple maps');
         });
+    });
+
+    describe('MCMap', () => {
+        let mcimg, map;
+        beforeEach(async () => {
+            // I hate repeating myself but... make this a function at some point
+            mcimg = new MCImage(TEST_IMAGE_PATH, JSON.parse(fs.readFileSync('./shared/colour_sets.json'))['1.12'], '1.12');
+
+            // Ready the image in an older scaling format (I wanted the hashes to line up from previous versions.)
+            [map] = await mcimg.readyImage('cover');
+        })
 
         describe('#saveNbtData()', () => {
             const TEMP_MAP_PATH = './test_map.dat';
 
-            let sets;
-            before(() => {
-                sets = JSON.parse(fs.readFileSync('./shared/colour_sets.json'));
-            });
-            beforeEach(() => {
-                // mcimg.colourSet = sets['1.12'];
-                mcimg = new MCImage(TEST_IMAGE_PATH, sets['1.12'], '1.12');
-            })
-
             it('saves expected data', async () => {
-                await mcimg.saveNbtData(TEMP_MAP_PATH);
+                await map.saveNbtData(TEMP_MAP_PATH);
 
                 let actual      = fs.readFileSync(TEMP_MAP_PATH);
                 let expected    = fs.readFileSync('./test/data/expected_map.dat');
@@ -196,11 +251,17 @@ describe('MCImage.js', () => {
             });
 
             it('doesn\'t reject', async () => {
-                await assert.doesNotReject(mcimg.saveNbtData(TEMP_MAP_PATH));
+                await assert.doesNotReject(map.saveNbtData(TEMP_MAP_PATH));
             });
 
-            it('calls #nbtData()');
+            it('calls #nbtData()', async () => {
+                let spy = sinon.spy(map, 'nbtData');
+
+                await map.saveNbtData(TEMP_MAP_PATH);
+
+                chai.expect(spy.calledOnce).to.be.true;
+            })
             it('compresses file');
         })
-    });
+    })
 });

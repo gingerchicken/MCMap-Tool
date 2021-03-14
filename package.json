@@ -25,7 +25,8 @@
     "express": "^4.17.1",
     "image-pixels": "^2.2.2",
     "node-nbt": "^1.0.0",
-    "sharp": "^0.27.2"
+    "sharp": "^0.27.2",
+    "sinon": "^9.2.4"
   },
   "devDependencies": {
     "chai": "^4.3.3",
