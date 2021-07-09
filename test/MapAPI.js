@@ -6,7 +6,6 @@ const fs = require('fs');
 chai.use(require('chai-http'));
 
 const TestUtils = require('./TestUtils');
-const { Stream } = require('stream');
 
 function endpoint(...j) {
     let url = TestUtils.API_MCMAP_ENDPOINT;
@@ -167,7 +166,7 @@ describe('MapAPI', () => {
             it('rejects invalid media types', async () => {
                 let resp = await run(1, 1, '1.12', TestUtils.ILLEGAL_MEDIA_PATH);
 
-                chai.expect(resp).status(400);
+                chai.expect(resp).status(415);
                 chai.expect(resp.res.statusMessage).to.equal('Media provided was not an image.');
             });
         });

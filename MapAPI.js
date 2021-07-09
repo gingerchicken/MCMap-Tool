@@ -107,18 +107,25 @@ router.post('/', multerSupress(upload.single('file'), 'Invalid Data'), async (re
     } catch (e) {
         // List of allowed error messages.
         switch (e.message) {
-            case 'Set does not exist.':
-            case 'Expected numbers, recieved something else.':
-            case 'Media provided was not an image.':
-            case 'Dimensions must be greater than zero.':
+            case 'Media provided was not an image.': {
+                res.status(415);
                 res.statusMessage = e.message;
                 break;
-            default:
+            }
+            case 'Set does not exist.':
+            case 'Expected numbers, recieved something else.':
+            case 'Dimensions must be greater than zero.':
+                res.statusMessage = e.message;
+                res.status(400);
+                break;
+            default: {
                 console.error(e);
+                res.status(400);
+            }
         }
 
         delFile();
-        return res.status(400).send();
+        return res.send();
     }
 
     // Generate the unique identifier of some sort.
