@@ -2,3 +2,8 @@ node_modules
 shared/colour_sets.json
 
 /*.dat
+temp/*
+
+# If I need to include this someone tell me :3
+/.nyc_output
+/coverage

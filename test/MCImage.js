@@ -5,13 +5,8 @@ const sinon     = require('sinon');
 const {MCImage, Colour, MCMap} = require('../MCImage');
 
 const fs = require('fs');
-const crypto = require('crypto');
 
-function createMd5(data) {
-    return crypto.createHash('md5').update(data).digest('hex');
-}
-
-const TEST_IMAGE_PATH = './test/data/funny_image.jpg';
+const TestUtils = require('./TestUtils');
 
 describe('MCImage.js', () => {
     let EXAMPLE_COLOUR_SET;
@@ -117,11 +112,11 @@ describe('MCImage.js', () => {
     describe('MCImage', () => {
         let mcimg;
         beforeEach(() => {
-            mcimg = new MCImage(TEST_IMAGE_PATH, EXAMPLE_COLOUR_SET);
+            mcimg = new MCImage(TestUtils.TEST_IMAGE_PATH, EXAMPLE_COLOUR_SET);
         });
 
         function loadRealSet() {
-            mcimg = new MCImage(TEST_IMAGE_PATH, JSON.parse(fs.readFileSync('./shared/colour_sets.json'))['1.12'], '1.12');
+            mcimg = new MCImage(TestUtils.TEST_IMAGE_PATH, JSON.parse(fs.readFileSync('./shared/colour_sets.json'))['1.12'], '1.12');
         }
 
         function coloursEqual(c1, c2) {
@@ -232,7 +227,7 @@ describe('MCImage.js', () => {
         let mcimg, map;
         beforeEach(async () => {
             // I hate repeating myself but... make this a function at some point
-            mcimg = new MCImage(TEST_IMAGE_PATH, JSON.parse(fs.readFileSync('./shared/colour_sets.json'))['1.12'], '1.12');
+            mcimg = new MCImage(TestUtils.TEST_IMAGE_PATH, JSON.parse(fs.readFileSync('./shared/colour_sets.json'))['1.12'], '1.12');
 
             // Ready the image in an older scaling format (I wanted the hashes to line up from previous versions.)
             [map] = await mcimg.readyImage('cover');
@@ -247,7 +242,7 @@ describe('MCImage.js', () => {
                 let actual      = fs.readFileSync(TEMP_MAP_PATH);
                 let expected    = fs.readFileSync('./test/data/expected_map.dat');
 
-                assert.deepStrictEqual(createMd5(actual), createMd5(expected), 'Not equal fingerprints');
+                assert.deepStrictEqual(TestUtils.createMd5(actual), TestUtils.createMd5(expected), 'Not equal fingerprints');
             });
 
             it('doesn\'t reject', async () => {

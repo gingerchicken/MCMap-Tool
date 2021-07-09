@@ -11,8 +11,13 @@ let app     = express();
 // Global Bad.
 // Settings for the web application
 MCMapSettings = {
-    'listenPort': 80
+    'listenPort': 80,
+    'tempUploadFolder': './temp',
+    'isTesting': false
 }
+
+// Storage for all of the MCImages
+MCImages = {};
 
 // These will be the colours we scraped
 MC_COLOUR_SETS = JSON.parse(fs.readFileSync('./shared/colour_sets.json'));
@@ -24,6 +29,10 @@ for (let setKey of Object.keys(MC_COLOUR_SETS)) {
     }
 }
 
+// Middleware
+app.use(require('body-parser').urlencoded({ extended: true }));
+app.use(require('./MapAPI'));
+
 // Simple root
 app.get('/', (req, res) => {
     res.send(MC_COLOUR_SETS);
@@ -34,22 +43,8 @@ let listener = app.listen(MCMapSettings.listenPort, () => {
     console.log(`MCMap-Tool is now listening on port ${MCMapSettings.listenPort}.`);
 });
 
-// Example Code
-let example = new MCImage('./test/data/javascript_meme.png', MC_COLOUR_SETS['1.12'], '1.12');
-
-// Generate something that is 16 maps tall and 16 maps wide
-example.totalMapsHeight = 16;
-example.totalMapsWidth  = 16;
-
-// Save them all from id zero to 16^2
-example.readyImage()
-.then((maps) => {
-    let i = 0;
-    for (let map of maps) {
-        map.saveNbtData(`map_${i}.dat`);
-
-        i++;
-    }
+listener.on('close', () => {
+    console.log('MCMap web listener closed.');
 })
 
 module.exports = {

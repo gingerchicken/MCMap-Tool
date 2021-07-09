@@ -4,7 +4,8 @@
   "description": "A (hopefully) useful utility that converts images to map arts for Minecraft",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test"
+    "test": "mocha",
+    "coverage": "nyc npm run test"
   },
   "repository": {
     "type": "git",
@@ -22,9 +23,13 @@
   },
   "homepage": "https://github.com/gingerchicken/MCMap-Tool#readme",
   "dependencies": {
+    "archiver": "^5.3.0",
+    "chai-http": "^4.3.0",
     "express": "^4.17.1",
     "image-pixels": "^2.2.2",
+    "multer": "^1.4.2",
     "node-nbt": "^1.0.0",
+    "nyc": "^15.1.0",
     "sharp": "^0.27.2",
     "sinon": "^9.2.4"
   },

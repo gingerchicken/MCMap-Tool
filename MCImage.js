@@ -162,6 +162,7 @@ class MCImage {
     totalMapsWidth  = 1;
     totalMapsHeight = 1;
 
+    // TODO change this to private and make it static
     // This just prevents specific colours being used, such as transparent colours etc.
     forbiddenIds = {
         '1.12': {
