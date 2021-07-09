@@ -181,13 +181,19 @@ router.get('/:id/maps', async (req, res) => {
     res.status(200).send(MCImages[id].maps);
 });
 
-// TODO create a lock for an image map.
 // Get the map files
 router.get('/:id/files', async (req, res) => {
     if (!(await verifyMaps(req, res))) return;
 
     let id = req.params.id;
     
+    // Check if it is locked
+    if (MCImages[id].isZipping) {
+        return res.status(423).send();
+    }
+
+    MCImages[id].isZipping = true;
+
     // Create the files
     let savePath = path.join(MCMapSettings.tempUploadFolder, id);
     let zipPath  = savePath + '.zip';
@@ -222,6 +228,9 @@ router.get('/:id/files', async (req, res) => {
 
     // Send the zip
     res.status(200).sendFile(path.resolve(zipPath));
+
+    // Remove the zipping mark
+    delete MCImages[id]['isZipping'];
 });
 
 module.exports = router;

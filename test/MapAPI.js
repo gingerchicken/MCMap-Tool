@@ -405,6 +405,48 @@ describe('MapAPI', () => {
 
             //     chai.expect(fs.readFileSync(REAL_ZIP_PATH).toString()).to.equal(DUMB_PHRASE);
             // }).timeout(0);
+
+            it('locks requests when already processing', async () => {
+                let promises = [run(ITEM_ID), run(ITEM_ID)];
+
+                let resps = await Promise.all(promises);
+                
+                // We don't care which way they reject but as long as one causes the other to reject
+                chai.expect(resps[0].status + resps[1].status).to.equal(200 + 423);
+
+                for (let resp of resps) {
+                    switch (resp.status) {
+                        case 200: {
+                            chai.expect(resp.type).to.equal('application/zip');
+                            break;
+                        }
+                        case 423: {
+                            chai.expect(resp.type).to.not.equal('application/zip');
+                            break;
+                        }
+                    }
+                }
+            });
+
+            it('allows new requests after unlock', async () => {
+                let promises = [run(ITEM_ID), run(ITEM_ID)];
+
+                let resps = await Promise.all(promises);
+                resps.push(await run(ITEM_ID));
+                
+                // We don't care which way they reject but as long as one causes the other to reject
+                let sigstatus = 0;
+                for (let resp of resps) {
+                    sigstatus += resp.status;
+                }
+                chai.expect(sigstatus).to.equal(200 + 423 + 200);
+                
+                // Check some things
+                let lastResp = resps[resps.length - 1];
+                chai.expect(lastResp).status(200); // duuuh... unless?
+                chai.expect(lastResp.type).to.equal('application/zip');
+                chai.expect(lastResp.body.length).to.be.greaterThan(1024, 'Seems too small for a zip file.');
+            });
         })
     });
 });
