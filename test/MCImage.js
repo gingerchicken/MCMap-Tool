@@ -257,6 +257,48 @@ describe('MCImage.js', () => {
                 chai.expect(spy.calledOnce).to.be.true;
             })
             it('compresses file');
+        });
+
+        describe('#toPNG()', () => {
+            let testFilePath;
+            beforeEach(() => {
+                testFilePath = `${TestUtils.TEST_REMAPPED_PNG_SAVE_LOCATION.split('.png')[0]}_${new Date().getTime()}.png`
+            });
+
+            it('generates expected png', async () => {
+                await map.toPNG(testFilePath);
+
+                // read the file and generate a hash
+                let hash = TestUtils.createMd5(fs.readFileSync(testFilePath));
+                
+                // Get expected hash
+                let expectedHash = TestUtils.createMd5(fs.readFileSync(TestUtils.TEST_REMAPPED_PNG_EXPECTED));
+
+                // Make sure that the files are the same.
+                chai.expect(hash).equal(expectedHash);
+            });
+
+            // How the heck do I check this?
+            it('only writes when a path is provided', async () => {
+                // This is probably really really bad but.
+                let spy = sinon.spy(fs, 'createWriteStream');
+
+                let promises = [map.toPNG(testFilePath), map.toPNG()];
+                await Promise.all(promises);
+
+                spy.restore();
+
+                chai.expect(spy.callCount).to.equal(1);
+            });
+            
+            it('returns the same png (with or without a path)', async () => {
+                let promises = [map.toPNG(testFilePath), map.toPNG()];
+
+                let [con, sin] = await Promise.all(promises);
+
+                // They should be both internally the same.
+                chai.expect(con.data).to.deep.equal(sin.data);
+            });
         })
     })
 });

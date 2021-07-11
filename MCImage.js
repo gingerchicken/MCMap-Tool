@@ -7,6 +7,7 @@ const zlib = require('zlib');
 // Image Processing
 const pixels = require('image-pixels');
 const sharp  = require('sharp');
+const pngjs  = require('pngjs');
 
 // MC Data handling
 const nbt = require('node-nbt');
@@ -51,6 +52,7 @@ class Colour {
 
 class MCMap {
     colourIds = [];
+    colours = [];
 
     // They should always be 128, maybe make them depend on the MCImage constant but whatever.
     height = 128;
@@ -66,9 +68,56 @@ class MCMap {
         z: 0
     }
 
-    constructor(colourIds, centre) {
-        this.centre = centre || this.centre;
+    async toPNG(outputPath) {
+        // Make a new PNG
+        let png = new pngjs.PNG({
+            width: this.width,
+            height: this.height
+        });
+
+        // TODO if colours is not present then maybe back track using the colourids? or just error either works lol
+        for (let i in this.colours) {
+            let colour = this.colours[i];
+
+            // let x = i % this.width;
+            // let y = (i-x)/this.width;
+            // let idx = (this.width*y + x) << 2;
+
+            // Let's use simple maths to optimise this :D
+            // y*this.width = (i - x)
+            // -> (i-x + x) << 2;
+            // -> i - x + x = i
+
+            // Hence...
+            let idx = i << 2;
+            
+            png.data[idx] = colour.r;
+            png.data[idx + 1] = colour.g;
+            png.data[idx + 2] = colour.b;
+            png.data[idx + 3] = colour.a;
+        }
+
+        // If they haven't provided a path then they clearly don't want to just save it and they know what they are doing...
+        if (outputPath) {
+            // Save the file
+            let stream = fs.createWriteStream(outputPath);
+            png.pack().pipe(stream);
+
+            await new Promise((resolve, reject) => {
+                stream.on('close', resolve);
+                stream.on('error', reject);
+            });
+        }
+
+        // Give the user their PNG
+        return png;
+    }
+
+    constructor(colourIds, colours, centre) {
         this.colourIds = colourIds || this.colourIds;
+        this.colours = colours || this.colours;
+        
+        this.centre = centre || this.centre;
     }
 
     async nbtData() {
@@ -227,10 +276,14 @@ class MCImage {
                     .toBuffer();
                 
                 // MC-ify the colours with in the image
+                // TODO migrate this to pngjs since it seems a little bit more used.
                 let {data, width, height} = await pixels(mapSelection);
 
                 // The new colour ids for the map
                 let colourIds  = [];
+
+                // For the preview of the map
+                let mappedColours = [];
 
                 // Get the colours and normalise
                 for (let i = 0; i < data.length; i += 4) {
@@ -245,6 +298,9 @@ class MCImage {
 
                     // Make sure that the id is an integer
                     colourIds.push(parseInt(id));
+
+                    // Add to the list of mapped colours for the preview
+                    mappedColours.push(colour);
                     
                     // If an image couldn't be found - for some reason - then cause an error.
                     if (id == -1) {
@@ -253,7 +309,7 @@ class MCImage {
                 }
 
                 // Load the map
-                let map = new MCMap(colourIds);
+                let map = new MCMap(colourIds, mappedColours);
 
                 // Add the map
                 maps.push(map);
