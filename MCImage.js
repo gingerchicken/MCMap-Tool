@@ -5,7 +5,6 @@ const fs   = require('fs');
 const zlib = require('zlib');
 
 // Image Processing
-const pixels = require('image-pixels');
 const sharp  = require('sharp');
 const pngjs  = require('pngjs');
 
@@ -276,8 +275,7 @@ class MCImage {
                     .toBuffer();
                 
                 // MC-ify the colours with in the image
-                // TODO migrate this to pngjs since it seems a little bit more used.
-                let {data, width, height} = await pixels(mapSelection);
+                let {data, width, height} = pngjs.PNG.sync.read(mapSelection);
 
                 // The new colour ids for the map
                 let colourIds  = [];
