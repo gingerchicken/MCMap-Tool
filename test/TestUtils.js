@@ -15,7 +15,7 @@ after(() => {
 })
 
 module.exports = {
-    API_MCMAP_ENDPOINT: '/',
+    API_MCMAP_ENDPOINT: '/images/',
     TEST_IMAGE_PATH: './test/data/funny_image.jpg',
     ILLEGAL_MEDIA_PATH: './test/data/illegal_media.mp4',
     addMap: (width, height, setVer, filepath, id) => {

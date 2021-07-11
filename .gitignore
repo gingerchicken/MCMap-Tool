@@ -7,3 +7,9 @@ temp/*
 # If I need to include this someone tell me :3
 /.nyc_output
 /coverage
+
+# Vue related ignores
+vue/build
+.parcel-cache/
+dist/
+.cache/

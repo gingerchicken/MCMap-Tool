@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "coverage": "nyc npm run test"
+    "coverage": "nyc npm run test",
+    "vue-start": "parcel vue/src/index.html",
+    "vue-build": "parcel build vue/src/index.html --no-source-maps --public-url ./ -d vue/build"
   },
   "repository": {
     "type": "git",
@@ -30,11 +32,23 @@
     "multer": "^1.4.2",
     "node-nbt": "^1.0.0",
     "nyc": "^15.1.0",
+    "parcel": "1.12.3",
     "sharp": "^0.27.2",
-    "sinon": "^9.2.4"
+    "sinon": "^9.2.4",
+    "vue": "^2.6.14",
+    "vue-hot-reload-api": "^2.3.4",
+    "vue-router": "^3.5.2"
   },
   "devDependencies": {
+    "@parcel/transformer-vue": "^2.0.0-nightly.2388",
+    "@vue/component-compiler-utils": "^3.2.2",
     "chai": "^4.3.3",
-    "mocha": "^8.3.0"
-  }
+    "mocha": "^8.3.0",
+    "vue-template-compiler": "^2.6.14"
+  },
+  "browserslist": [
+    "last 3 Chrome versions",
+    "Firefox 63",
+    "Node 11"
+  ]
 }

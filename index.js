@@ -31,12 +31,7 @@ for (let setKey of Object.keys(MC_COLOUR_SETS)) {
 
 // Middleware
 app.use(require('body-parser').urlencoded({ extended: true }));
-app.use(require('./MapAPI'));
-
-// Simple root
-app.get('/', (req, res) => {
-    res.send(MC_COLOUR_SETS);
-});
+app.use('/images/', require('./MapAPI'));
 
 // Bind the listener
 let listener = app.listen(MCMapSettings.listenPort, () => {
