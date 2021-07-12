@@ -17,10 +17,11 @@ after(() => {
 module.exports = {
     API_MCMAP_ENDPOINT: '/',
     TEST_IMAGE_PATH: './test/data/funny_image.jpg',
+    TEST_IMAGE2_PATH: './test/data/javascript_meme.jpg',
     ILLEGAL_MEDIA_PATH: './test/data/illegal_media.mp4',
     TEST_REMAPPED_PNG_SAVE_LOCATION: './temp/test_map.png',
     TEST_REMAPPED_PNG_EXPECTED: './test/data/expected_remap.png',
-    addMap: (width, height, setVer, filepath, id) => {
+    addMCImage: (width, height, setVer, filepath, id) => {
         MCImages[id] = new MCImage(filepath, MC_COLOUR_SETS[setVer], setVer, width, height);
     },
     isMCImage: (image) => {

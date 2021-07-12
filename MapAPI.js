@@ -167,7 +167,7 @@ router.delete('/:id/', (req, res) => {
 async function verifyMaps(req, res) {
     let id = req.params.id;
 
-    if (!MCImages[id]) {
+    if (!id || !MCImages[id]) {
         res.status(404).send();
         return false;
     }
@@ -179,6 +179,20 @@ async function verifyMaps(req, res) {
     return true;
 }
 
+async function verifyMap(req, res) {
+    if (!(await verifyMaps(req, res))) return;
+
+    let id = req.params.id;
+    let mapId = parseInt(req.params.mapId);
+
+    if (mapId === NaN || !MCImages[id].maps[mapId]) {
+        res.status(404).send();
+        return false;
+    }
+
+    return true;
+}
+
 // Generate an image's map files and send them to the client
 router.get('/:id/maps', async (req, res) => {
     if (!(await verifyMaps(req, res))) return;
@@ -186,6 +200,45 @@ router.get('/:id/maps', async (req, res) => {
     let id = req.params.id;
     
     res.status(200).send(MCImages[id].maps);
+});
+
+// Get specific maps
+router.get('/:id/maps/:mapId', async (req, res) => {
+    if (!(await verifyMap(req, res))) return;
+
+    let id = req.params.id;
+    let mapId = req.params.mapId;
+
+    res.status(200).send(MCImages[id].maps[mapId]);
+});
+
+// Get the maps 'importText' (i.e. the thing you will enter into a command block maybe.)
+router.get('/:id/maps/:mapId/importText', async (req, res) => {
+    if (!(await verifyMap(req, res))) return;
+
+    let id = req.params.id;
+    let mapId = req.params.mapId;
+
+    let offset = MCMapSettings.importTextOffset;
+    let map = MCImages[id].maps[mapId];
+
+    let text = '';
+
+    let toChar = (colourId) => {
+        return String.fromCharCode(colourId + offset);
+    }
+
+    for (let colourId of map.colourIds) {
+        text += toChar(colourId);
+    }
+
+    // base64 encode it to minimise data loss from minecraft chat
+    text = Buffer.from(text).toString('base64');
+
+    res.send({
+        text,
+        mapId
+    });
 });
 
 // Get the map files

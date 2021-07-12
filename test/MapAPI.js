@@ -22,7 +22,9 @@ function endpoint(...j) {
 describe('MapAPI', () => {
     const ITEM_ID = 'verycooltest123';
     const INVALID_ID = 'EEEEEEEEeEe';
-    const DIM_MAPS = [1,1];
+    const DIM_MAPS = [1, 1];
+    const DIM_MAPS_LARGER = [2, 2];
+
 
     // No breaky?
     afterEach(() => {
@@ -49,7 +51,7 @@ describe('MapAPI', () => {
             });
             it('gives expected when including items', async () => {
                 // Add an item
-                TestUtils.addMap(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
+                TestUtils.addMCImage(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
 
                 let resp = await run();
 
@@ -58,7 +60,7 @@ describe('MapAPI', () => {
             });
             it('updates after change', async () => {
                 // Add an item
-                TestUtils.addMap(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
+                TestUtils.addMCImage(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
 
                 let resp = await run();
 
@@ -76,8 +78,8 @@ describe('MapAPI', () => {
             });
             
             it('can support multiple items', async () => {
-                TestUtils.addMap(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
-                TestUtils.addMap(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID + '2');
+                TestUtils.addMCImage(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
+                TestUtils.addMCImage(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID + '2');
 
                 resp = await run();
                 body = resp.body;
@@ -182,7 +184,7 @@ describe('MapAPI', () => {
 
             it('returns map with valid id', async () => {
                 // Add the map
-                TestUtils.addMap(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
+                TestUtils.addMCImage(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
 
                 let resp = await run(ITEM_ID);
                 chai.expect(resp).status(200);
@@ -204,7 +206,7 @@ describe('MapAPI', () => {
 
             beforeEach(async () => {
                 for (let id of ADDED_IDS) {
-                    TestUtils.addMap(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, id);
+                    TestUtils.addMCImage(1, 1, '1.12', TestUtils.TEST_IMAGE_PATH, id);
                 }
 
                 chai.expect(Object.keys(MCImages).sort()).to.deep.equal(ADDED_IDS.sort());
@@ -254,7 +256,7 @@ describe('MapAPI', () => {
 
     describe('/:id/maps', () => {
         beforeEach(() => {
-            TestUtils.addMap(...DIM_MAPS, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
+            TestUtils.addMCImage(...DIM_MAPS_LARGER, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
         });
 
         describe('GET', () => {
@@ -272,18 +274,40 @@ describe('MapAPI', () => {
 
                 // Check values
                 let body = resp.body;
-                chai.expect(body).to.have.length(DIM_MAPS[0]*DIM_MAPS[1]);
+                chai.expect(body).to.have.length(DIM_MAPS_LARGER[0]*DIM_MAPS_LARGER[1]);
 
                 // Check the maps
                 for (let map of body) {
                     chai.expect(map.colourIds).to.have.length(128*128);
+                    chai.expect(map.colours).to.have.length(128*128);
+                    chai.expect(map).to.have.property('centre');
+                }
+
+                // For my sanity... make sure they are different
+                // This could happen if the image was just one solid colour or looped in different areas but for my test image... it shouldn't
+                for (let i in body) {
+                    let map = body[i];
+
+                    for (let j in body) {
+                        let targetMap = body[j];
+
+                        if (j == i) {
+                            chai.expect(map).to.deep.equal(targetMap);
+                            continue;
+                        }
+
+                        chai.expect(map).to.not.deep.equal(targetMap);
+                    }
                 }
             });
-
             it('rejects invalid id', async () => {
-                let resp = await run(INVALID_ID);
+                let invalidIds = [INVALID_ID, ' ', ''];
+
+                for (let invalidId of invalidIds) {
+                    let resp = await run(invalidId);
                 
-                chai.expect(resp).status(404);
+                    chai.expect(resp).status(404);
+                }
             });
             it('prepares maps when required', async () => {
                 let spy = sinon.spy(MCImages[ITEM_ID], 'readyImage');
@@ -309,6 +333,77 @@ describe('MapAPI', () => {
 
                 chai.expect(spy.callCount).to.be.equal(2);
             });
+
+            describe('/:mapId', () => {
+                let invalidIds = [INVALID_ID, -1, DIM_MAPS_LARGER[0]*DIM_MAPS_LARGER[1]];
+
+                async function run(id, mapId) {
+                    return await chai.request(TestUtils.index.app)
+                    .get(endpoint(id, 'maps', mapId));
+                }
+
+                it('returns specific map', async () => {
+                    for (let i = 0; i < DIM_MAPS_LARGER[0]*DIM_MAPS_LARGER[1]; i++) {
+                        let actual = await run(ITEM_ID, i);
+                        let expected = MCImages[ITEM_ID].maps[i];
+
+                        // Check that we actually have something internally
+                        chai.expect(expected).to.not.equal(undefined);
+                        
+                        // Check that we have actually been given something
+                        chai.expect(actual.status).not.equal(404);
+                        
+                        // Check the something
+                        chai.expect(actual.body).deep.equal(expected);
+                        chai.expect(actual.body).to.not.deep.equal({});
+                    }
+                });
+                it('rejects invalid mapId', async () => {
+                    for (let invalidId of invalidIds) {
+                        let resp = await run(ITEM_ID, invalidId);
+
+                        chai.expect(resp).status(404);
+                        chai.expect(resp.body).to.deep.equal({}, 'data was given');
+                    }
+                });
+
+                describe('/importText', () => {
+                    async function run(id, mapId) {
+                        return await chai.request(TestUtils.index.app)
+                        .get(endpoint(id, 'maps', mapId, 'importText'));
+                    }
+
+                    it('returns expected data', async () => {
+                        for (let i = 0; i < DIM_MAPS_LARGER[0]*DIM_MAPS_LARGER[1]; i++) {
+                            let resp = await run(ITEM_ID, i);
+                            let map = MCImages[ITEM_ID].maps[i];
+
+                            chai.expect(parseInt(resp.body.mapId)).to.equal(i);
+
+                            // Get the text and decode it.
+                            let text = resp.body.text;
+                            text = Buffer.from(text, 'base64').toString('utf-8');
+
+                            chai.expect(text).to.have.lengthOf(128*128);
+                            chai.expect(text.constructor.name).to.be.equal('String');
+
+                            for (let j = 0; j < text.length; j++) {
+                                let corriColourId = text.charCodeAt(j) - MCMapSettings.importTextOffset;
+
+                                chai.expect(map.colourIds[j]).to.equal(corriColourId);
+                            }
+                        }
+                    });
+                    it('rejects invalid mapId', async () => {
+                        for (let invalidId of invalidIds) {
+                            let resp = await run(ITEM_ID, invalidId);
+    
+                            chai.expect(resp).status(404);
+                            chai.expect(resp.body).to.deep.equal({}, 'data was given');
+                        }
+                    });
+                });
+            });
         });
     });
 
@@ -324,7 +419,7 @@ describe('MapAPI', () => {
         }
 
         beforeEach(async () => {
-            TestUtils.addMap(...DIM_MAPS, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
+            TestUtils.addMCImage(...DIM_MAPS, '1.12', TestUtils.TEST_IMAGE_PATH, ITEM_ID);
         })
 
         describe('GET', () => {

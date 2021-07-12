@@ -13,6 +13,7 @@ let app     = express();
 MCMapSettings = {
     'listenPort': 80,
     'tempUploadFolder': './temp',
+    'importTextOffset': 32,
     'isTesting': false
 }
 
